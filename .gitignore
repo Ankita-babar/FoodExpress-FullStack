@@ -1,0 +1,29 @@
+# Java and Maven
+backend/target/
+*.class
+*.jar
+*.war
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+application-local.properties
+
+# Logs
+*.log
+
+# macOS and editors
+.DS_Store
+.vscode/
+.idea/
+*.iml
+
+# Temporary and backup files
+*.backup
+*.bak
+*~
+
+# Backup files
+*.backup
+*.save

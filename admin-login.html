@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodExpress Admin Login</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        .login-box {
+            width: 90%;
+            max-width: 400px;
+            padding: 32px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            color: #ff6b35;
+        }
+
+        p {
+            text-align: center;
+            color: #666;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            margin-top: 8px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 13px;
+            border: none;
+            border-radius: 7px;
+            background: #ff6b35;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #message {
+            margin-top: 16px;
+            color: #c62828;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>FoodExpress</h1>
+        <p>Admin Dashboard Login</p>
+
+        <form id="loginForm">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password"
+                   autocomplete="current-password" required>
+
+            <button id="loginButton" type="submit">Sign In</button>
+            <div id="message" role="alert"></div>
+        </form>
+    </div>
+
+    <script>
+        const API = "http://localhost:8080";
+        const form = document.getElementById("loginForm");
+        const button = document.getElementById("loginButton");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+            button.disabled = true;
+            message.textContent = "";
+
+            try {
+                const csrfResponse = await fetch(`${API}/api/auth/csrf`, {
+                    credentials: "include"
+                });
+
+                if (!csrfResponse.ok) {
+                    throw new Error("Could not obtain the security token.");
+                }
+
+                const csrfData = await csrfResponse.json();
+
+                const loginBody = new URLSearchParams({
+                    username: document.getElementById("username").value.trim(),
+                    password: document.getElementById("password").value
+                });
+
+                const loginResponse = await fetch(`${API}/login`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-XSRF-TOKEN": csrfData.token
+                    },
+                    body: loginBody.toString()
+                });
+
+                if (loginResponse.status === 204 || loginResponse.ok) {
+                    window.location.href = "admin.html";
+                    return;
+                }
+
+                if (loginResponse.status === 401 || loginResponse.status === 403) {
+                    throw new Error(
+                        "Sign-in failed. Check your credentials and try again."
+                    );
+                }
+
+                throw new Error(`Login failed (HTTP ${loginResponse.status}).`);
+            } catch (error) {
+                message.textContent = error.message.includes("Failed to fetch")
+                    ? "Cannot connect to the backend. Make sure it is running on port 8080."
+                    : error.message;
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
